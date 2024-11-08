@@ -109,6 +109,7 @@ const Header = () => {
               width: "100px",
               height: "40px",
             }}
+            onClick={() => router.push("/auth/signin")}
           >
             Sign In
           </Button>
@@ -122,6 +123,7 @@ const Header = () => {
               width: "100px",
               height: "40px",
             }}
+            onClick={() => router.push("/auth/signup")} // Ensure the route is correct
           >
             Sign Up
           </Button>
