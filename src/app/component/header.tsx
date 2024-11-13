@@ -18,7 +18,7 @@ const Header = () => {
         </h1>
 
         {/* Navigation Links */}
-        <nav className="flex gap-14 ml-20 p-8">
+        <nav className="flex gap-14 ml-20 pt-8 pb-10">
           {["Home", "About", "Contact", "Blog"].map((text, index) => (
             <button
               key={index}
@@ -31,15 +31,15 @@ const Header = () => {
         </nav>
 
         {/* Auth Buttons */}
-        <div className="flex gap-4">
+        <div className="flex gap-1">
           <button
-            className="w-24 h-10 text-[#15143966] font-medium border-none rounded-full hover:bg-gray-100 transition-all"
+            className="w-24 h-10 text-[#15143966] font-medium text-[14px] border-none rounded-full hover:bg-gray-100 transition-all"
             onClick={() => router.push("/auth/signin")}
           >
             Sign In
           </button>
           <button
-            className="w-24 h-10 font-medium text-white bg-[#AC7575] rounded-full hover:bg-opacity-90 transition-all"
+            className="w-24 h-10 font-medium text-[14px] text-white bg-[#AC7575] rounded-full hover:bg-opacity-90 transition-all"
             onClick={() => router.push("/auth/signup")}
           >
             Sign Up

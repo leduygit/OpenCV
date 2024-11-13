@@ -121,7 +121,7 @@ export default function JobListing() {
         </div>
 
         {/* Right side - Job details */}
-        <div className="flex-grow w-full border-2 rounded-lg flex-col min-h-[1000px]">
+        <div className="flex-grow w-full border-2 border-gray-400 rounded-lg flex-col min-h-[1000px]">
           {selectedJob ? (
             <div className="space-y-4 border-b-2 animation-fadeIn">
               {" "}

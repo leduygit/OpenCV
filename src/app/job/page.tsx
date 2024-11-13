@@ -8,6 +8,7 @@ export default function JobListingPage() {
   const [location, setLocation] = useState("");
   const [isLoading, setIsLoading] = useState(false); // Add loading state
   const [error, setError] = useState(""); // Add error handling
+  const [activeTab, setActiveTab] = useState("jobs"); // Add activeTab state
 
   const handleSearch = () => {
     if (!searchQuery || !location) {
@@ -33,8 +34,8 @@ export default function JobListingPage() {
 
   return (
     <div>
-      <main className="min-h-screen pr-5 pl-20 flex justify-center items-center flex-col">
-        <div className="flex w-full max-w-[800px] space-x-2 pb-10">
+      <main className="min-h-screen flex justify-center items-center flex-col">
+        <div className="flex w-1/2 max-w-[800px] space-x-2 pb-10">
           {/* Search Input with Search Icon */}
           <div className="relative flex-grow w-2/3">
             <input
@@ -70,8 +71,36 @@ export default function JobListingPage() {
           </div>
         </div>
 
+        <div className="w-full border-b-2 border-gray-300">
+          {/* Centered Tab Buttons */}
+          <div className="flex justify-center mx-auto mt-8">
+            <div className="flex space-x-4">
+              <button
+                onClick={() => setActiveTab("forYou")}
+                className={`px-4 py-2 text-center text-sm ${
+                  activeTab === "forYou"
+                    ? "border-b-4 border-[#AC7575] font-bold text-[16px]"
+                    : "text-black-500 text-[16px]"
+                }`}
+              >
+                For You
+              </button>
+              <button
+                onClick={() => setActiveTab("yourActivity")}
+                className={`px-4 py-2 text-center text-sm ${
+                  activeTab === "yourActivity"
+                    ? "border-b-4 border-[#AC7575] font-bold text-[16px]"
+                    : "text-black-500 text-[16px]"
+                }`}
+              >
+                Your Activity
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Center the JobListing component, with more width and shifted to the right */}
-        <div className="w-full max-w-[2500px] p-4 ml-8">
+        <div className="w-full max-w-[2500px] pl-20 ml-8 pt-14">
           {/* Added ml-8 for shifting to the right */}
           <JobListing />
         </div>
