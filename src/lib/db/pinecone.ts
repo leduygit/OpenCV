@@ -13,5 +13,6 @@ const pinecone = new Pinecone({
   apiKey: PINECONE_API_KEY,
 });
 
+const pineconeIndex = pinecone.Index(process.env.PINECONE_INDEX_NAME as string);
 
-export { pinecone };
+export { pinecone, pineconeIndex };
