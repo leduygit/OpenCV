@@ -121,7 +121,7 @@ skill_dict = [
     "ruby",
     "swift",
     "kotlin",
-    "r",
+    # "r",
     "typescript",
     "lập trình shell",
     "git",

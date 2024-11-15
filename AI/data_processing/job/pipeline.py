@@ -65,18 +65,21 @@ def main_pipeline(file_path: str) -> pd.DataFrame:
 
     # Step 2: Trích xuất kỹ năng và chuẩn hóa cột ngành nghề/vị trí
     data = apply_extraction(data, columns=["context", "jd"], skill_dict=skill_dict)
-    data = separate_features(data, column="skills")
+    # data = separate_features(data, column="skills")
     data = normalize_columns(data, industry_map=industry_map, position_map=position_map)
+
+    # Save data
+    data.to_csv("./data/job_preprocessed.csv", index=False)
 
     # Step 3: Vector hóa các đặc trưng bằng embedding và TF-IDF
     embed_fields = [
         "jd",
-        "skills",
-        "context",
-        "title",
-        "company",
-        "industry",
-        "position",
+        # "skills",
+        # "context",
+        # "title",
+        # "company",
+        # "industry",
+        # "position",
     ]
     tfidf_fields = ["industry_position"]
     data["industry_position"] = (

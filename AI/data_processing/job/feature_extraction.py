@@ -90,6 +90,7 @@ def apply_extraction(
     data["combined_text"] = data[columns].apply(
         lambda row: " ".join(row.values.astype(str)), axis=1
     )
+    print(data["combined_text"].head())
     data["skills"] = data["combined_text"].apply(
         lambda x: extract_requirements(x, skill_dict, ner_method)
     )

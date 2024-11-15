@@ -6,9 +6,13 @@ from sklearn.decomposition import PCA
 from transformers import AutoTokenizer, AutoModel
 from typing import List, Optional
 
+# import torch
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 # Load model and tokenizer (shared resource across functions)
-tokenizer = AutoTokenizer.from_pretrained("vinai/phobert-base")
-model = AutoModel.from_pretrained("vinai/phobert-base")
+tokenizer = AutoTokenizer.from_pretrained("vinai/phobert-base-v2")
+model = AutoModel.from_pretrained("vinai/phobert-base-v2").to(device)
 
 
 def embed_text_batch(
@@ -37,9 +41,14 @@ def embed_text_batch(
             truncation=True,
             max_length=max_length,
         )
+        # Move each tensor in `inputs` to the correct device
+        inputs = {key: tensor.to(device) for key, tensor in inputs.items()}
+
         with torch.no_grad():
             outputs = model(**inputs)
-        embeddings = outputs.last_hidden_state[:, 0, :].cpu().numpy()  # CLS token
+        embeddings = (
+            outputs.last_hidden_state[:, 0, :].cpu().numpy()  # CLS token on CPU
+        )
         all_embeddings.extend(embeddings)
     return np.array(all_embeddings)
 
