@@ -14,6 +14,16 @@ if (!INDEX_NAME) {
 
 const pineconeIndex = pinecone.Index(INDEX_NAME);
 
+/**
+ * Seeds the jobs collection in the database with jobs from the jobs.json file.
+ * If a job with the same title and company name already exists in the database,
+ * it is not overwritten. Instead, the existing job is used.
+ *
+ * For each job, an embedding is generated using the FastAPI endpoint and then
+ * upserted into Pinecone.
+ *
+ * @returns {Promise<void>}
+ */
 export async function seedJobs() {
   await connectToDatabase();
 
@@ -36,13 +46,14 @@ export async function seedJobs() {
       savedJob = await JobModel.create(job);
     }
 
+    // Generate an embedding for the job description using the FastAPI endpoint
     // const response = await axios.post("http://127.0.0.1:8000/embed", {
     //   text: job.combined_text,
     // });
 
     // const embedding = response.data.embedding;
 
-    // // Upsert embedding to Pinecone
+    // Upsert the job embedding to Pinecone
     // await pineconeIndex.upsert([
     //   {
     //     id: savedJob._id.toString(),

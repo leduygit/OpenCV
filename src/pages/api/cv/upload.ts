@@ -50,6 +50,18 @@ const upload = multer({
   },
 });
 
+/**
+ * Handles API requests to upload a new CV
+ *
+ * This API endpoint is responsible for handling the upload of a new CV to the
+ * server. It uses Multer to handle the file upload, and then uses FastAPI to
+ * process the CV and extract the text and embedding. The extracted text and
+ * embedding are then saved to MongoDB and Pinecone, respectively.
+ *
+ * @param {NextApiRequest} req - Next.js API request
+ * @param {NextApiResponse} res - Next.js API response
+ * @returns {Promise<void>}
+ */
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -74,13 +86,30 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     });
 
     console.log("Processing CV with FastAPI...");
+    /**
+     * Calls the FastAPI endpoint to process the CV and extract the text and
+     * embedding. The endpoint returns an object with the following properties:
+     *
+     * - extractedText: The extracted text from the CV
+     * - embedding: The embedding of the CV
+     */
     const { extractedText, embedding } = await processCV(filePath, mimetype);
     cv.parsedContent = extractedText;
     // Uncomment the following line to save the CV to MongoDB
     await cv.save();
 
     console.log("Saving embedding to Pinecone...");
-    // Uncomment the following line to save the embedding to Pinecone
+    /**
+     * Calls the Pinecone upsert endpoint to save the embedding of the CV to
+     * Pinecone. The endpoint takes an array of objects with the following
+     * properties:
+     *
+     * - id: The ID of the CV
+     * - values: The embedding of the CV
+     * - metadata: An object with the following properties:
+     *   - userId: The ID of the user who uploaded the CV
+     *   - uploadedAt: The timestamp when the CV was uploaded
+     */
     await pineconeIndex.upsert([
       {
         id: cv._id.toString(),
@@ -93,6 +122,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     ]);
 
     console.log("Cleaning up file...");
+    // Remove the uploaded file from the server
     fs.unlinkSync(filePath);
 
     return res.status(200).json({

@@ -1,38 +1,102 @@
 // /pages/api/user/profile.ts
-import type { NextApiResponse, NextApiHandler } from "next";
-import connectToDatabase from "../../../lib/db/mongodb";
+import type { NextApiRequest, NextApiResponse } from "next";
 import { authenticate } from "../../../middleware/authMiddleware";
-import { UserModel } from "../../../lib/models/User";
-import { CustomNextApiRequest } from "@/types/api";
+import { userService } from "../../../lib/services/userService";
+import connectToDatabase from "../../../lib/db/mongodb";
+
 /**
- * @description
- * A Next.js API route that returns the user's profile data when given a valid
- * authentication token. The user's password and 2FA secret are not included in
- * the response.
+ * Handles API requests to manage user profiles
  *
- * @function
- * @param {NextApiRequest} req - The Next.js request object, extended with user ID.
- * @param {NextApiResponse} res - The Next.js response object.
- * @returns {Promise<void>} - A promise that resolves with no value.
+ * @param {NextApiRequest} req - Next.js API request
+ * @param {NextApiResponse} res - Next.js API response
+ * @returns {Promise<void>}
  */
-const handler: (
-  req: CustomNextApiRequest,
+const handler = async (
+  req: NextApiRequest,
   res: NextApiResponse
-) => Promise<void> = async (req, res) => {
-  // Connect to MongoDB
+): Promise<void> => {
   await connectToDatabase();
+  const userId = req.user.id;
 
-  // Find the user in the database
-  const user = await UserModel.findById(req.user?.id).select(
-    "-passwordHash -twoFactorSecret"
-  );
-  // If the user is not found, return a 404 error
-  if (!user) {
-    return res.status(404).json({ error: "User not found" });
+  switch (req.method) {
+    case "GET":
+      // Handle GET requests to get user profile
+      return getUserProfile(req, res, userId);
+
+    case "PUT":
+      // Handle PUT requests to update user profile
+      return updateUserProfile(req, res, userId);
+
+    default:
+      // Return 405 error for unsupported methods
+      res.setHeader("Allow", ["GET", "PUT"]);
+      res.status(405).end(`Method ${req.method} Not Allowed`);
   }
-
-  // Return the user's data in the response
-  return res.status(200).json({ user });
 };
 
-export default authenticate(handler as NextApiHandler);
+export default authenticate(handler);
+
+/**
+ * Retrieves a user profile based on the user ID.
+ *
+ * @param {NextApiRequest} req - Next.js API request
+ * @param {NextApiResponse} res - Next.js API response
+ * @param {string} userId - The ID of the user whose profile is to be retrieved
+ * @returns {Promise<void>}
+ */
+const getUserProfile = async (
+  req: NextApiRequest,
+  res: NextApiResponse,
+  userId: string
+): Promise<void> => {
+  try {
+    // Fetch user details from the database using the user ID
+    const user = await userService.getUserById(userId);
+
+    // If the user is not found, return a 404 error response
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Return the user data in a 200 OK response
+    return res.status(200).json({ user });
+  } catch (error) {
+    // Log any error that occurs and return a 500 Internal Server Error response
+    console.error("Error fetching user profile:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+/**
+ * Updates a user profile based on the user ID and update data.
+ *
+ * @param {NextApiRequest} req - Next.js API request
+ * @param {NextApiResponse} res - Next.js API response
+ * @param {string} userId - The ID of the user whose profile is to be updated
+ * @returns {Promise<void>}
+ */
+const updateUserProfile = async (
+  req: NextApiRequest,
+  res: NextApiResponse,
+  userId: string
+) => {
+  try {
+    // Extract the update data from the request body
+    const updateData = req.body;
+
+    // Update the user profile in the database using the user ID and update data
+    const user = await userService.updateUser(userId, updateData);
+
+    // If the user is not found, return a 404 error response
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Return the updated user data in a 200 OK response
+    return res.status(200).json({ user });
+  } catch (error) {
+    // Log any error that occurs and return a 500 Internal Server Error response
+    console.error("Error updating user profile:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
