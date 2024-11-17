@@ -19,16 +19,17 @@ async function generateJobEmbeddings() {
       const embedding = response.data.embedding;
 
       // Lưu embedding vào Pinecone
-      await pineconeIndex.upsert({
-        id: job._id.toString(),
-        values: embedding,
-        metadata: {
-          title: job.title,
-          industry: job.industry,
-          location: job.location,
+      await pineconeIndex.upsert([
+        {
+          id: job._id.toString(),
+          values: embedding,
+          metadata: {
+            title: job.title,
+            industry: job.industry,
+            location: job.location,
+          },
         },
-        namespace: "jobs",
-      });
+      ]);
 
       console.log(`Embedding generated for job ${job.title}`);
     } catch (error) {
