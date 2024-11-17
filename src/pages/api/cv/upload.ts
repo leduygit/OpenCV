@@ -77,18 +77,20 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const { extractedText, embedding } = await processCV(filePath, mimetype);
     cv.parsedContent = extractedText;
     // Uncomment the following line to save the CV to MongoDB
-    // await cv.save();
+    await cv.save();
 
     console.log("Saving embedding to Pinecone...");
     // Uncomment the following line to save the embedding to Pinecone
-    // await pineconeIndex.upsert({
-    //   id: cv._id.toString(),
-    //   values: embedding,
-    //   metadata: {
-    //     userId: reqWithFile.user.id,
-    //     uploadedAt: cv.uploadedAt.toISOString(),
-    //   },
-    // });
+    await pineconeIndex.upsert([
+      {
+        id: cv._id.toString(),
+        values: embedding,
+        metadata: {
+          userId: reqWithFile.user.id,
+          uploadedAt: cv.uploadedAt.toISOString(),
+        },
+      },
+    ]);
 
     console.log("Cleaning up file...");
     fs.unlinkSync(filePath);
