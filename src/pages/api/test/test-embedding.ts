@@ -1,4 +1,4 @@
-// /pages/api/generateEmbedding.ts
+// /pages/api/tests/test-embedding.ts
 import type { NextApiRequest, NextApiResponse } from "next";
 import axios from "axios";
 
