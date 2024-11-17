@@ -33,5 +33,12 @@ const JobSchema: Schema = new Schema<IJob>({
   postedAt: { type: Date, default: Date.now },
 });
 
+JobSchema.index({ jobDescription: "text", title: "text" });
+
+// Ensure indexes are created when model is first used
+JobSchema.pre("init", async function () {
+  await JobModel.syncIndexes();
+});
+
 export const JobModel =
   mongoose.models.Job || mongoose.model<IJob>("Job", JobSchema);
