@@ -1,0 +1,5 @@
+.placeholder-bold::placeholder {
+    color: #EBEAED;
+    font-weight: 500;
+    margin-left: 10px;
+  }
