@@ -9,7 +9,8 @@ export default function JobListingPage() {
   const [location, setLocation] = useState("");
   const [isLoading, setIsLoading] = useState(false); // Add loading state
   const [error, setError] = useState(""); // Add error handling
-  const [activeTab, setActiveTab] = useState("jobs"); // Add activeTab state
+  const [activeTab, setActiveTab] = useState("forYou"); // Add activeTab state
+
   const handleFilterChoice = (selectedOptions: string[]) => {
     console.log(`Selected filters:`, selectedOptions);
   };
@@ -38,7 +39,7 @@ export default function JobListingPage() {
 
   return (
     <div>
-      <main className="min-h-screen flex justify-center items-center flex-col">
+      <main className="min-h-screen flex items-center flex-col">
         <div className="flex w-1/2 max-w-[800px] space-x-2 pb-10">
           {/* Search Input with Search Icon */}
           <div className="relative flex-grow w-2/3">
@@ -81,23 +82,35 @@ export default function JobListingPage() {
             <div className="flex space-x-4">
               <button
                 onClick={() => setActiveTab("forYou")}
-                className={`px-4 py-2 text-center text-sm ${
+                className={`px-4 py-2 text-center text-[17px] relative ${
                   activeTab === "forYou"
-                    ? "border-b-4 border-[#AC7575] font-bold text-[16px]"
-                    : "text-black-500 text-[16px]"
+                    ? "font-bold text-[17px]"
+                    : "text-black-500 text-[17px]"
                 }`}
               >
                 For You
+                {/* Underline Animation */}
+                <span
+                  className={`absolute left-0 bottom-0 h-[4px] w-full bg-[#AC7575] transform transition-all duration-300 ease-in-out ${
+                    activeTab === "forYou" ? "scale-x-100" : "scale-x-0"
+                  }`}
+                />
               </button>
               <button
                 onClick={() => setActiveTab("yourActivity")}
-                className={`px-4 py-2 text-center text-sm ${
+                className={`px-4 py-2 text-center text-[17px] relative ${
                   activeTab === "yourActivity"
-                    ? "border-b-4 border-[#AC7575] font-bold text-[16px]"
-                    : "text-black-500 text-[16px]"
+                    ? "font-bold text-[17px]"
+                    : "text-black-500 text-[17px]"
                 }`}
               >
                 Your Activity
+                {/* Underline Animation */}
+                <span
+                  className={`absolute left-0 bottom-0 h-[4px] w-full bg-[#AC7575] transform transition-all duration-300 ease-in-out ${
+                    activeTab === "yourActivity" ? "scale-x-100" : "scale-x-0"
+                  }`}
+                />
               </button>
             </div>
           </div>
@@ -105,7 +118,7 @@ export default function JobListingPage() {
 
         <div className="flex w-full ml-48 mt-5">
           {" "}
-          {/* Added flex and justify-start */}
+          {/* Added flex and justify-start */}{" "}
           <FilterButton
             label="Company Rating"
             options={["Option 1", "Option 2", "Option 3", "Option 4"]}
@@ -113,10 +126,26 @@ export default function JobListingPage() {
           />
         </div>
 
-        {/* JobListing Component */}
-        <div className="w-full max-w-[2500px] pl-20 ml-8 pt-14">
-          <JobListing />
-        </div>
+        {/* Conditional Rendering Based on Active Tab */}
+        {activeTab === "forYou" ? (
+          <div className="w-full max-w-[2500px] pl-20 ml-8 pt-14">
+            <JobListing />
+          </div>
+        ) : (
+          <div className="w-full max-w-[2500px] pl-20 ml-8 pt-14">
+            {/* Simple Dropdown for Your Activity */}
+            <div className="w-1/2">
+              <label className="block text-lg font-semibold mb-2">
+                Select Activity
+              </label>
+              <select className="w-full p-3 rounded-md bg-gray-200 border">
+                <option value="">Select</option>
+                <option value="savedJobs">Saved Jobs</option>
+                <option value="recentlyVisited">Recently Visited Jobs</option>
+              </select>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
