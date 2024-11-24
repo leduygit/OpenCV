@@ -16,9 +16,9 @@ export default function Signin() {
   const [message, setMessage] = useState("");
   const router = useRouter();
 
-  // const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   setFormData({ ...formData, [e.target.name]: e.target.value });
-  // };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +55,7 @@ export default function Signin() {
           <p className="text-[#15143966] text-[16px] font-sans">
             By signing up, you agree to the Terms of Service.
           </p>
-          {/* {message && <p>{message}</p>} */}
+          {message && <p>{message}</p>}
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             <div>
               <label className="block text-xs font-semibold text-[#0B1344] py-2">E - MAIL</label>
@@ -67,7 +67,12 @@ export default function Signin() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#0B1344] py-2">PASSWORD</label>
+              <div className="flex md:w-4/5">
+                <label className="block text-xs font-semibold text-[#0B1344] py-2">PASSWORD</label>
+                <Link href="/auth/forgot-password" className="text-[#AC7575] text-xs font-semibold ml-auto py-2">
+                  Forgot password?
+                </Link>
+              </div>
               <div className="flex space-x-4">
                 <input
                   type="password"
