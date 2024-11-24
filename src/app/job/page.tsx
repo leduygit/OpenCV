@@ -2,6 +2,7 @@
 import Head from "next/head";
 import JobListing from "../component/joblisting";
 import { useState } from "react";
+import FilterButton from "../component/FilterButton";
 
 export default function JobListingPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -9,6 +10,9 @@ export default function JobListingPage() {
   const [isLoading, setIsLoading] = useState(false); // Add loading state
   const [error, setError] = useState(""); // Add error handling
   const [activeTab, setActiveTab] = useState("jobs"); // Add activeTab state
+  const handleFilterChoice = (selectedOptions: string[]) => {
+    console.log(`Selected filters:`, selectedOptions);
+  };
 
   const handleSearch = () => {
     if (!searchQuery || !location) {
@@ -99,9 +103,18 @@ export default function JobListingPage() {
           </div>
         </div>
 
-        {/* Center the JobListing component, with more width and shifted to the right */}
+        <div className="flex w-full ml-48 mt-5">
+          {" "}
+          {/* Added flex and justify-start */}
+          <FilterButton
+            label="Company Rating"
+            options={["Option 1", "Option 2", "Option 3", "Option 4"]}
+            onFind={handleFilterChoice}
+          />
+        </div>
+
+        {/* JobListing Component */}
         <div className="w-full max-w-[2500px] pl-20 ml-8 pt-14">
-          {/* Added ml-8 for shifting to the right */}
           <JobListing />
         </div>
       </main>
