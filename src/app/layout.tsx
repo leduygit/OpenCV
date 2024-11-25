@@ -1,8 +1,7 @@
 // app/layout.tsx
 import React, { ReactNode } from "react";
 import Header from "./component/header"; // Adjust the import path as needed
-import "./globals.css"; // Ensure global styles are imported
-
+import "../../styles/globals.css"; // Import global styles
 // Define props type
 interface RootLayoutProps {
   children: ReactNode; // Type for children
