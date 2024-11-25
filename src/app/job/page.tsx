@@ -3,6 +3,7 @@ import Head from "next/head";
 import JobListing from "../component/joblisting";
 import { useState } from "react";
 import FilterButton from "../component/FilterButton";
+import JobDropdown from "../component/JobDropdown";
 
 export default function JobListingPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -132,18 +133,15 @@ export default function JobListingPage() {
             <JobListing />
           </div>
         ) : (
-          <div className="w-full max-w-[2500px] pl-20 ml-8 pt-14">
-            {/* Simple Dropdown for Your Activity */}
-            <div className="w-1/2">
-              <label className="block text-lg font-semibold mb-2">
-                Select Activity
-              </label>
-              <select className="w-full p-3 rounded-md bg-gray-200 border">
-                <option value="">Select</option>
-                <option value="savedJobs">Saved Jobs</option>
-                <option value="recentlyVisited">Recently Visited Jobs</option>
-              </select>
+          <div className="w-full max-w-[2500px] pt-14">
+            <div>
+              <JobDropdown title="Recently Visited">
+                <JobListing />
+              </JobDropdown>
             </div>
+            <JobDropdown title="Saved">
+              <JobListing />
+            </JobDropdown>
           </div>
         )}
       </main>
