@@ -1,5 +1,6 @@
+// /scripts/seedJobs.ts
 import connectToDatabase from "@/lib/db/mongodb";
-import { JobModel } from "@/lib/models/Job";
+import { JobModel, IJob } from "@/lib/models/Job";
 import fs from "fs";
 import { pinecone } from "@/lib/db/pinecone"; // Import Pinecone client
 import axios from "axios";
@@ -36,42 +37,61 @@ export async function seedJobs() {
       job.skillsRequired = JSON.parse(job.skillsRequired.replace(/'/g, '"'));
     }
 
-    const existingJob = await JobModel.findOne({
-      title: job.title,
-      companyName: job.companyName,
-    });
-
-    let savedJob = existingJob;
-    if (!existingJob) {
-      savedJob = await JobModel.create(job);
-    }
-
-    // Generate an embedding for the job description using the FastAPI endpoint
-    // const response = await axios.post("http://127.0.0.1:8000/embed", {
-    //   text: job.combined_text,
-    // });
-
-    // const embedding = response.data.embedding;
-
-    // Upsert the job embedding to Pinecone
-    // await pineconeIndex.upsert([
-    //   {
-    //     id: savedJob._id.toString(),
-    //     values: embedding,
-    //     metadata: {
-    //       title: job.title,
-    //       industry: job.industry,
-    //       location: job.location,
-    //     },
-    //   },
-    // ]);
+    // Pass combined_text directly when saving the job
+    await saveJob(job, pineconeIndex);
   }
 
   console.log("Jobs seeded successfully.");
   process.exit(0);
 }
 
-// seedJobs().catch((error) => {
-//   console.error("Error seeding jobs:", error);
-//   process.exit(1);
-// });
+async function saveJobToMongoDB(job: any): Promise<IJob> {
+  const { combined_text, ...jobData } = job; // Remove combined_text before saving
+  const existingJob = await JobModel.findOne({
+    title: jobData.title,
+    companyName: jobData.companyName,
+  });
+
+  if (!existingJob) {
+    const newJob = await JobModel.create(jobData);
+    return newJob;
+  }
+
+  return existingJob; // Return existing job if already present
+}
+
+async function saveJobToPinecone(job: any, pineconeIndex: any) {
+  if (!job.combined_text) {
+    throw new Error(
+      "Job data must include `combined_text` to generate an embedding."
+    );
+  }
+
+  // Generate embedding from combined_text
+  const response = await axios.post(`${process.env.FASTAPI_URL}/embed`, {
+    text: job.combined_text,
+  });
+
+  const embedding = response.data.embedding;
+
+  // Save embedding to Pinecone
+  await pineconeIndex.upsert([
+    {
+      id: job._id.toString(),
+      values: embedding,
+      metadata: {
+        title: job.title,
+        industry: job.industry,
+        location: job.location,
+      },
+    },
+  ]);
+}
+
+async function saveJob(job: any, pineconeIndex: any) {
+  // 1. Save job to MongoDB
+  const savedJob = await saveJobToMongoDB(job);
+
+  // 2. Save embedding to Pinecone using combined_text
+  await saveJobToPinecone({ ...job, _id: savedJob._id }, pineconeIndex);
+}

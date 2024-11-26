@@ -18,9 +18,7 @@ index = pc.Index(name=PINECONE_INDEX_NAME)
 app = FastAPI()
 
 # Load the pipeline
-model = SentenceTransformer(
-    "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
-)
+model = SentenceTransformer("CrazyDave53/OpenCV-finetuned")
 
 
 def extract_text_from_file(file: UploadFile) -> str:
