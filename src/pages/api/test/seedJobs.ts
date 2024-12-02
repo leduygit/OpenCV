@@ -1,6 +1,5 @@
 // /pages/api/test-pinecone.ts
 import type { NextApiRequest, NextApiResponse } from "next";
-import connectToDatabase from "@/lib/db/mongodb";
 import { seedJobs } from "../../../scripts/seedJobs";
 /**
  * Tests MongoDB connection
@@ -14,7 +13,6 @@ export default async function handler(
   res: NextApiResponse
 ) {
   try {
-    console.log("Connecting to MongoDB...");
     await seedJobs().then(() => {
       console.log("Seeded jobs into MongoDB.");
       res.status(200).json({ success: true });
