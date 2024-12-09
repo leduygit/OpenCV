@@ -1,13 +1,13 @@
 import { useState } from "react";
 
 interface Job {
-  id: number;
+  _id: number;
   title: string;
-  company: string;
-  logoUrl: string;
+  companyName: string;
+  imageURL: string | undefined;
   location: string;
-  salary: string;
-  details: string;
+  salaryRange: string;
+  jobDescription: string;
   address: string;
   size: string;
   type: string;
@@ -16,46 +16,13 @@ interface Job {
   revenue: string;
 }
 
-const jobs: Job[] = [
-  {
-    id: 1,
-    title: "IT Specialist (IT Technician)",
-    logoUrl:
-      "https://daihoclienthong.edu.vn/wp-content/uploads/2021/04/LienThongDHKhoaHocTuNhien.jpeg",
-    company: "Drodex",
-    location: "Rancho Cordova, CA",
-    salary: "$45K - $65K",
-    address: "2890 Kilgore Road, Rancho Cordova, CA 95670",
-    details:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-    size: "100-500 employees",
-    type: "Nonprofit",
-    sector: "Healthcare",
-    founded: "2003",
-    revenue: "$50M - $100M",
-  },
-  {
-    id: 2,
-    title: "IT Associate",
-    logoUrl: "https://via.placeholder.com/150",
-    company: "Nexus HR Services",
-    location: "Sacramento, CA",
-    salary: "$25.00 Per Hour",
-    address: "2890 Kilgore Road, Rancho Cordova, CA 95670",
-    details: "Provide IT support to ensure efficient operations...",
-    size: "10-50 employees",
-    type: "Private",
-    sector: "Consulting",
-    founded: "2010",
-    revenue: "$10M - $20M",
-  },
-  // Add more job data as needed
-];
-
-export default function JobListing() {
+export default function JobListing({ jobs }: { jobs: Job[] }) {
   const [selectedJob, setSelectedJob] = useState<Job | null>(
     jobs.length > 0 ? jobs[0] : null
   );
+
+  console.log(selectedJob);
+
   const [showFullDetails, setShowFullDetails] = useState(false);
 
   const toggleDetails = () => setShowFullDetails(!showFullDetails);
@@ -68,13 +35,13 @@ export default function JobListing() {
           <div>
             {jobs.map((job) => (
               <div
-                key={job.id}
+                key={job._id}
                 onClick={() => {
                   setSelectedJob(job);
                   setShowFullDetails(false); // Reset when selecting a new job
                 }}
                 className={`flex w-full items-start border rounded-lg p-4 shadow-sm space-x-4 cursor-pointer hover:bg-gray-100 ${
-                  selectedJob?.id === job.id
+                  selectedJob?._id === job._id
                     ? "border-black"
                     : "border-transparent"
                 } animation-hoverGrow`} // Applying hoverGrow animation
@@ -82,17 +49,17 @@ export default function JobListing() {
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center space-x-2">
                     <img
-                      src={job.logoUrl}
+                      src={job.imageURL}
                       alt="Company logo"
                       className="w-10 h-10 object-cover rounded-full"
                     />
-                    <p className="text-sm text-gray-500">{job.company}</p>
+                    <p className="text-sm text-gray-500">{job.companyName}</p>
                   </div>
                   <h3 className="font-bold text-[20px] text-[#1E1E1E]">
                     {job.title}
                   </h3>
                   <p className="text-sm text-[13px]">{job.address}</p>
-                  <p className="text-sm text-[13px]">{job.salary}</p>
+                  <p className="text-sm text-[13px]">{job.salaryRange}</p>
                 </div>
                 <div>
                   <button
@@ -132,13 +99,13 @@ export default function JobListing() {
                 <div className="flex justify-between items-center">
                   <div className="flex items-center space-x-4">
                     <img
-                      src={selectedJob.logoUrl}
+                      src={selectedJob.imageURL}
                       alt="Company logo"
                       className="w-16 h-16 object-cover rounded-full"
                     />
                     <div>
                       <p className="text-sm text-black-500 font-semibold">
-                        {selectedJob.company}
+                        {selectedJob.companyName}
                       </p>
                     </div>
                   </div>
@@ -196,11 +163,11 @@ export default function JobListing() {
                 </p>
                 <p className="text-[16px] text-black-500 pt-10 overflow-hidden transition-all duration-500 ease-in-out">
                   {showFullDetails
-                    ? selectedJob.details
-                    : selectedJob.details.slice(0, 100) +
-                      (selectedJob.details.length > 100 ? "..." : "")}
+                    ? selectedJob.jobDescription
+                    : selectedJob.jobDescription.slice(0, 100) +
+                      (selectedJob.jobDescription.length > 100 ? "..." : "")}
                 </p>
-                {selectedJob.details.length > 100 && (
+                {selectedJob.jobDescription.length > 100 && (
                   <div className="flex justify-between items-center">
                     <button
                       onClick={toggleDetails}
@@ -237,7 +204,7 @@ export default function JobListing() {
                   {selectedJob.address}
                 </p>
                 <div className="bg-gray-100 p-4 rounded-lg text-[30px] text-[#0B1344] flex items-center">
-                  <span>{selectedJob.salary}</span>
+                  <span>{selectedJob.salaryRange}</span>
                   <span className="text-[16px] text-[#0B1344] pl-2 pt-2">
                     /hr
                   </span>
