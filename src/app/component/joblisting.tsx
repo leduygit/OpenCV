@@ -56,9 +56,11 @@ export default function JobListing({ jobs }: { jobs: Job[] }) {
                     <p className="text-sm text-gray-500">{job.companyName}</p>
                   </div>
                   <h3 className="font-bold text-[20px] text-[#1E1E1E]">
-                    {job.title}
+                    {job.title.length > 20
+                      ? job.title.slice(0, 20) + "..."
+                      : job.title}
                   </h3>
-                  <p className="text-sm text-[13px]">{job.address}</p>
+                  <p className="text-sm text-[13px]">{job.location}</p>
                   <p className="text-sm text-[13px]">{job.salaryRange}</p>
                 </div>
                 <div>
@@ -159,7 +161,7 @@ export default function JobListing({ jobs }: { jobs: Job[] }) {
                   {selectedJob.title}
                 </h3>
                 <p className="text-[15px] text-black-500">
-                  {selectedJob.address}
+                  {selectedJob.location}
                 </p>
                 <p className="text-[16px] text-black-500 pt-10 overflow-hidden transition-all duration-500 ease-in-out">
                   {showFullDetails
@@ -201,7 +203,7 @@ export default function JobListing({ jobs }: { jobs: Job[] }) {
                 </h4>
                 <p className="text-sm text-black-500 pb-5">
                   {" "}
-                  {selectedJob.address}
+                  {selectedJob.location}
                 </p>
                 <div className="bg-gray-100 p-4 rounded-lg text-[30px] text-[#0B1344] flex items-center">
                   <span>{selectedJob.salaryRange}</span>

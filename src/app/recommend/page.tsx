@@ -17,10 +17,28 @@ export default function FileUploadPage() {
     }
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (selectedFile) {
-      alert(`File "${selectedFile?.name}" uploaded successfully!`);
-      setUploadComplete(true); // Mark the upload as complete
+      try {
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error("File upload failed");
+        }
+
+        const result = await response.json();
+        alert(`File uploaded successfully: ${result.message}`);
+        setUploadComplete(true); // Mark the upload as complete
+      } catch (error) {
+        console.error("Upload error:", error);
+        alert("An error occurred during file upload. Please try again.");
+      }
     } else {
       alert("Please select a file before uploading.");
     }
@@ -70,7 +88,7 @@ export default function FileUploadPage() {
       <div className="w-full bg-[#AC75754D] flex items-center">
         {/* Image on the left */}
         <img
-          src="https://s3-alpha-sig.figma.com/img/a0ab/e5fe/345d5d52c45b67eaf372a11eb40f719e?Expires=1733702400&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=AgYvQpbwg~6R6RTJNssXXCIM-mB4j~NvfN9GmDOfKGe64sdpHaXrhC06OgSjjdK4spTULU6W4~5RFqKGW0oCgtB6Emcr163nwXpuLQQafk6xkiL-w2Yz4JHC41MXHYyLUis0k~624OrNfilDfEVFz9CDrAItjpFxdorU9aFF8pmrxskAsBzF6vr3UsBLj22rJFjNSYE1Nw2MJVj96PrySoauXsgtkBPL0hSkSyGZoF2qy4-RWPP4rOH43Q5Y3D86ugNPD549C7U3O~GUf2BRe8u48ZMMng3RViYNHv~~wrosWtsV9mcvRcoFZYk0lnxQdnrrI2OQZM5A8P8w2XZkNQ__"
+          src="https://i.ibb.co/D4Bpjk3/rec.png"
           alt="Workplace Illustration"
           className="ml-48 h-40 w-40"
         />
@@ -99,7 +117,7 @@ export default function FileUploadPage() {
           {/* Center Image Icon */}
           <div className="mb-6">
             <img
-              src="https://s3-alpha-sig.figma.com/img/0bcf/8148/c932c7cc8222649a49891efd7248eade?Expires=1733702400&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=fY1CH6X8SZIztU32uR6rUD1sEWIJkcSpy8m79ZZPeqBGHyo28xDXx304i7uR8mTTpBF7KUuY87VaJ3F1UtB9Ubu-OE5F5QfdQNRBxMhYXaXpoM8QN4J97hiVyeGd04uH8YSAPrN95yZ~GWZBHxvc~We-wpzZfZBTadfGXKfyLi2hXiDQirmIOBsf6qHk~Rmtzqb7HBW9qzu-qENx2XcdQJAOJbyiIbRMLjellzxveghinzCzsgjrAeaAd8tr2m43zlI97Jr4Wbk8KIc~mBotgFwc7Y9uMsi37B1K78EFSo9UzCjNjnUWUJb5WOc8XB0R2R6B0ozCa0NgQIjuQRmPew__"
+              src="https://i.ibb.co/NTM7Lh0/upload.png"
               alt="Upload Icon"
               className="h-20 w-20"
             />
