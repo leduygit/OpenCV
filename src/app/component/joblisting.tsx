@@ -16,7 +16,7 @@ interface Job {
   revenue: string;
 }
 
-export default function JobListing({ jobs }: { jobs: Job[] }) {
+function JobListing({ jobs }: { jobs: Job[] }) {
   const [selectedJob, setSelectedJob] = useState<Job | null>(
     jobs.length > 0 ? jobs[0] : null
   );
@@ -249,3 +249,6 @@ export default function JobListing({ jobs }: { jobs: Job[] }) {
     </div>
   );
 }
+
+export { JobListing };
+export type { Job };

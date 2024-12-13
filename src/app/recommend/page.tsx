@@ -1,31 +1,43 @@
 "use client";
 import { useState, useEffect } from "react";
+import { Job } from "../component/joblisting";
+import { useRouter } from "next/navigation";
+
+interface Recommendation {
+  job: Job;
+  score: number;
+}
 
 export default function FileUploadPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
   const [uploadComplete, setUploadComplete] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const router = useRouter();
+
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     if (event.target.files && event.target.files.length > 0) {
-      setSelectedFile(event.target.files[0]);
-      // Start loading immediately when a file is selected
+      const file = event.target.files[0];
+      setSelectedFile(file);
       setLoading(true);
       setProgress(0);
       setUploadComplete(false); // Reset the completion status
-    }
-  };
 
-  const handleUpload = async () => {
-    if (selectedFile) {
       try {
+        const token = localStorage.getItem("token"); // Retrieve the token from localStorage
         const formData = new FormData();
-        formData.append("file", selectedFile);
+        formData.append("file", file);
 
-        const response = await fetch("/api/upload", {
+        const response = await fetch("/api/cv/upload", {
           method: "POST",
           body: formData,
+          headers: {
+            Authorization: `Bearer ${token}`, // Add the bearer token
+          },
         });
 
         if (!response.ok) {
@@ -33,14 +45,59 @@ export default function FileUploadPage() {
         }
 
         const result = await response.json();
-        alert(`File uploaded successfully: ${result.message}`);
+        console.log("Upload successful:", result);
         setUploadComplete(true); // Mark the upload as complete
+        setErrorMessage(""); // Clear any previous error message
       } catch (error) {
         console.error("Upload error:", error);
-        alert("An error occurred during file upload. Please try again.");
+        setErrorMessage(
+          "An error occurred during file upload. Please try again."
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleUpload = async () => {
+    if (selectedFile) {
+      try {
+        const token = localStorage.getItem("token"); // Retrieve the token from localStorage
+
+        console.log(token);
+
+        const response = await fetch("/api/jobs/recommend", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`, // Add the bearer token
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("File upload failed");
+        }
+
+        const result = await response.json();
+        const jobsArray: Job[] = result.recommendations.map(
+          (recommendation: Recommendation) => recommendation.job
+        );
+
+        alert(result.recommendations); // Display the recommendations
+        setUploadComplete(true); // Mark the upload as complete
+        setErrorMessage(""); // Clear any previous error message
+
+        // redirect to "job" page passing the jobsArray
+
+        const jobsQuery = JSON.stringify(jobsArray);
+        router.push(`/job?jobs=${encodeURIComponent(jobsQuery)}`);
+      } catch (error) {
+        console.error("Upload error:", error);
+        setErrorMessage(
+          "An error occurred during file upload. Please try again."
+        );
       }
     } else {
-      alert("Please select a file before uploading.");
+      setErrorMessage("Please select a file");
     }
   };
 
@@ -70,12 +127,12 @@ export default function FileUploadPage() {
   // Determine file type logo
   const getFileTypeLogo = (file: File) => {
     if (file.name.endsWith(".pdf")) {
-      return "https://www.bing.com/images/blob?bcid=r.v34qS.88kHbg"; // PDF logo
+      return "https://i.ibb.co/3YXMjYx/pngtree-pdf-file-icon-png-png-image-7965915.png"; // PDF logo
     }
     if (file.name.endsWith(".docx")) {
-      return "https://th.bing.com/th/id/R.8e70cda231e4e7e91e974e7378d965c9?rik=cIQimYS0vLIpaQ&pid=ImgRaw&r=0"; // DOCX logo
+      return "https://i.ibb.co/y6KLxhZ/docx.png"; // DOCX logo
     }
-    return "https://th.bing.com/th/id/R.2cf435025c4a8328cd9aab77f4594ddd?rik=3lSdm0WPdqFu9g&pid=ImgRaw&r=0"; // Default logo
+    return "https://i.ibb.co/fpZdkCh/default.png"; // Default logo
   };
 
   // Truncate long file names
@@ -199,6 +256,14 @@ export default function FileUploadPage() {
       >
         Find
       </button>
+
+      {/* Error Message */}
+
+      {errorMessage && (
+        <div className="mt-4 text-red-500 text-sm font-semibold">
+          {errorMessage}
+        </div>
+      )}
     </div>
   );
 }

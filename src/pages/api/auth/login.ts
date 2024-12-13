@@ -30,6 +30,9 @@ export default async function handler(
 
   const { emailOrUsername, password } = req.body;
 
+  console.log("Login attempt with email/username:", emailOrUsername);
+  console.log("Login attempt with password", password);
+
   // Validate input fields
   if (!emailOrUsername || !password) {
     return res.status(400).json({ error: "Missing required fields" });
