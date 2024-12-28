@@ -1,13 +1,7 @@
 // /pages/api/test-pinecone.ts
 import type { NextApiRequest, NextApiResponse } from "next";
 import { seedJobs } from "../../../scripts/seedJobs";
-/**
- * Tests MongoDB connection
- *
- * @param {NextApiRequest} req - Next.js API request
- * @param {NextApiResponse} res - Next.js API response
- * @returns {Promise<void>}
- */
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
