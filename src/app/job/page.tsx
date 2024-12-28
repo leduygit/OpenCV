@@ -7,6 +7,12 @@ import JobDropdown from "../component/JobDropdown";
 import { Job } from "../component/joblisting";
 import { useSearchParams } from "next/navigation";
 
+interface InteractionResponse {
+  interactions: {
+    jobId: Job; // The jobId is an object of type Job
+  }[];
+}
+
 export default function JobListingPage() {
   const params = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
@@ -15,6 +21,8 @@ export default function JobListingPage() {
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("forYou");
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [savedJobs, setSavedJobs] = useState<Job[]>([]);
+  const [viewedJobs, setViewedJobs] = useState<Job[]>([]);
 
   // Check if the 'jobs' query parameter exists
 
@@ -37,19 +45,90 @@ export default function JobListingPage() {
       }
     };
 
-    const jobsParam = params?.get("jobs");
+    const fetchSavedJobs = async () => {
+      setIsLoading(true);
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(
+          "/api/user/interaction?interactionType=saved",
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`, // Add the bearer token
+            },
+          }
+        );
+
+        const data: InteractionResponse = await response.json();
+        const jobArray: Job[] = data.interactions.map((data) => data.jobId);
+        setSavedJobs(jobArray);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "An unexpected error occurred."
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const fetchViewedJobs = async () => {
+      setIsLoading(true);
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(
+          "/api/user/interaction?interactionType=viewed",
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`, // Add the bearer token
+            },
+          }
+        );
+        const data: InteractionResponse = await response.json();
+        const jobArray: Job[] = data.interactions.map((data) => data.jobId);
+        setViewedJobs(jobArray);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "An unexpected error occurred."
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const jobsParam = localStorage.getItem("jobs");
+
     if (jobsParam) {
       try {
-        // Parse and set the jobs from the URL parameter
+        // Parse and set the jobs from localStorage
         const jobsArray: Job[] = JSON.parse(jobsParam);
-        setJobs(jobsArray); // Set the jobs passed in the URL params
+        setJobs(jobsArray); // Set the jobs passed in localStorage
       } catch (err) {
         console.error("Error parsing jobs parameter", err);
       }
     } else if (activeTab === "forYou" && jobs.length === 0) {
-      // Fetch jobs only if not passed via URL parameters and if jobs are not already loaded
+      // Fetch jobs only if not passed via localStorage and if jobs are not already loaded
       fetchJobs();
     }
+
+    if (activeTab === "yourActivity") {
+      fetchSavedJobs();
+      fetchViewedJobs();
+    }
+
+    // This function will be triggered when the page is refreshed or the user navigates away
+    const handleBeforeUnload = () => {
+      // Optionally remove jobs only if you want them cleared when the page is leaving
+      localStorage.removeItem("jobs");
+    };
+
+    // Adding the event listener for beforeunload
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    // Cleanup the event listener when the component unmounts
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
   }, [activeTab, jobs.length, params]);
 
   const handleFilterChoice = (selectedOptions: string[]) => {
@@ -152,15 +231,15 @@ export default function JobListingPage() {
         ) : (
           <div className="w-full max-w-[2500px] pt-14">
             <JobDropdown title="Recently Visited">
-              {jobs.length > 0 ? (
-                <JobListing jobs={jobs} />
+              {viewedJobs.length > 0 ? (
+                <JobListing jobs={viewedJobs} />
               ) : (
                 <p>No recently visited jobs.</p>
               )}
             </JobDropdown>
             <JobDropdown title="Saved">
-              {jobs.length > 0 ? (
-                <JobListing jobs={jobs} />
+              {savedJobs.length > 0 ? (
+                <JobListing jobs={savedJobs} />
               ) : (
                 <p>No saved jobs.</p>
               )}

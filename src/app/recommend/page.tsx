@@ -89,7 +89,9 @@ export default function FileUploadPage() {
         // redirect to "job" page passing the jobsArray
 
         const jobsQuery = JSON.stringify(jobsArray);
-        router.push(`/job?jobs=${encodeURIComponent(jobsQuery)}`);
+        // save the jobsQuery in local storage
+        localStorage.setItem("jobs", jobsQuery);
+        router.push(`/job`);
       } catch (error) {
         console.error("Upload error:", error);
         setErrorMessage(

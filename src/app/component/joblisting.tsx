@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Job {
   _id: number;
@@ -14,12 +14,82 @@ interface Job {
   sector: string;
   founded: string;
   revenue: string;
+  industry: string;
+  position: string;
+  requiredExperience: string;
+  requiredDegree: string;
+  skillsRequired: string[];
 }
 
 function JobListing({ jobs }: { jobs: Job[] }) {
-  const [selectedJob, setSelectedJob] = useState<Job | null>(
-    jobs.length > 0 ? jobs[0] : null
-  );
+  const handleSaveJob = async (jobId: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        "http://localhost:3000/api/user/interaction",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // Add the bearer token
+          },
+          body: JSON.stringify({
+            jobId,
+            interactionType: "saved",
+            notes: "Job saved",
+          }),
+        }
+      );
+
+      if (response.ok) {
+        console.log("Job saved successfully:", jobId);
+      } else {
+        console.error("Failed to save job");
+      }
+    } catch (error) {
+      console.error("Error saving job:", error);
+    }
+  };
+
+  const [selectedJob, setSelectedJob] = useState<Job | null>(jobs[0] || null);
+  // API call when selectedJob changes
+  useEffect(() => {
+    if (!selectedJob) return;
+
+    async function logInteraction() {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(
+          "http://localhost:3000/api/user/interaction",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`, // Add the bearer token
+            },
+            body: JSON.stringify({
+              jobId: selectedJob?._id,
+              interactionType: "viewed",
+              notes: "Viewed Job",
+            }),
+          }
+        );
+
+        if (response.ok) {
+          console.log(
+            "Interaction logged successfully for job:",
+            selectedJob?._id
+          );
+        } else {
+          console.error("Failed to log interaction");
+        }
+      } catch (error) {
+        console.error("Error logging interaction:", error);
+      }
+    }
+
+    logInteraction();
+  }, [selectedJob]);
 
   console.log(selectedJob);
 
@@ -67,6 +137,10 @@ function JobListing({ jobs }: { jobs: Job[] }) {
                   <button
                     aria-label="Save job"
                     className="text-gray-400 hover:text-gray-600"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSaveJob(job._id.toString());
+                    }}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -117,6 +191,7 @@ function JobListing({ jobs }: { jobs: Job[] }) {
                     <button
                       aria-label="Bookmark job"
                       className="text-gray-400 hover:text-gray-600 bg-gray-200 p-2 rounded-md"
+                      onClick={() => handleSaveJob(selectedJob._id.toString())}
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -212,10 +287,40 @@ function JobListing({ jobs }: { jobs: Job[] }) {
                   </span>
                 </div>
               </div>
-              {/* Section: Company Overview */}
+              {/* Section: Job Overview */}
               <div className="space-y-2 border-b border-gray-300 pl-16 pt-4 pb-10">
                 <h4 className="font-bold text-[25px] text-[#1E1E1E]">
-                  Company Overview
+                  Job Overview
+                </h4>
+                <div className="flex-col items-start space-y-2 pt-4">
+                  <div className="flex justify-between max-w-[650px] pr-4 text-[16px]">
+                    <p className="text-black font-semibold">Industry</p>
+                    <p className="text-black-500">{selectedJob.industry}</p>
+                  </div>
+                  <div className="flex justify-between max-w-[650px] pr-4 text-[16px]">
+                    <p className="text-black font-semibold">Position</p>
+                    <p className="text-black-500">{selectedJob.position}</p>
+                  </div>
+                  <div className="flex justify-between max-w-[650px] pr-4 text-[16px]">
+                    <p className="text-black font-semibold">
+                      Required Experience
+                    </p>
+                    <p className="text-black-500">
+                      {selectedJob.requiredExperience}
+                    </p>
+                  </div>
+                  <div className="flex justify-between max-w-[650px] pr-4 text-[16px]">
+                    <p className="text-black font-semibold">Required Degree</p>
+                    <p className="text-black-500">
+                      {selectedJob.requiredDegree}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              {/* Section: Job Overview */}
+              <div className="space-y-2 border-b border-gray-300 pl-16 pt-4 pb-10">
+                <h4 className="font-bold text-[25px] text-[#1E1E1E]">
+                  Job Overview
                 </h4>
                 <div className="flex-col items-start space-y-2 pt-4">
                   <div className="flex justify-between max-w-[250px] pr-4 text-[16px]">
@@ -237,6 +342,28 @@ function JobListing({ jobs }: { jobs: Job[] }) {
                   <div className="flex justify-between max-w-[250px] pr-4 text-[16px]">
                     <p className="text-black font-semibold">Revenue</p>
                     <p className="text-black-500">{selectedJob.revenue}</p>
+                  </div>
+                  <div className="flex justify-between max-w-[650px] pr-4 text-[16px]">
+                    <p className="text-black font-semibold">Industry</p>
+                    <p className="text-black-500">{selectedJob.industry}</p>
+                  </div>
+                  <div className="flex justify-between max-w-[650px] pr-4 text-[16px]">
+                    <p className="text-black font-semibold">Position</p>
+                    <p className="text-black-500">{selectedJob.position}</p>
+                  </div>
+                  <div className="flex justify-between max-w-[650px] pr-4 text-[16px]">
+                    <p className="text-black font-semibold">
+                      Required Experience
+                    </p>
+                    <p className="text-black-500">
+                      {selectedJob.requiredExperience}
+                    </p>
+                  </div>
+                  <div className="flex justify-between max-w-[650px] pr-4 text-[16px]">
+                    <p className="text-black font-semibold">Required Degree</p>
+                    <p className="text-black-500">
+                      {selectedJob.requiredDegree}
+                    </p>
                   </div>
                 </div>
               </div>
