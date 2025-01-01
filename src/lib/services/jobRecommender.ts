@@ -1,56 +1,44 @@
 // /lib/services/jobRecommender.ts
 import { pineconeIndex } from "../db/pinecone";
 import { JobModel } from "../models/Job";
-
+import axios from "axios";
 interface JobRecommendation {
   job: any;
   score: number;
 }
 
-/**
- * Recommends jobs based on the user's CV embedding.
- *
- * @param {string} cvId The ID of the user's CV.
- * @param {number} topK The number of top similar jobs to return.
- * @returns {Promise<JobRecommendation[]>} A list of recommended jobs with similarity scores.
- */
 export async function recommendJobs(
   cvId: string,
   topK: number = 10
 ): Promise<JobRecommendation[]> {
   try {
-    // Lấy embedding của CV từ Pinecone
-    // console.log("Starting fetch...", cvId);
-    // console.log("Type of cvId:", typeof cvId);
-    const cvEmbeddingResult = await pineconeIndex.fetch([cvId]);
+    // Send embedding to FastAPI for recommendations
+    console.log("Querying FastAPI for job recommendations...");
+    const response = await axios.post(
+      `${process.env.FASTAPI_URL}/recommend-jobs`,
+      {
+        cvId,
+        top_k: topK,
+      }
+    );
 
-    // console.log("cvEmbeddingResult:", cvEmbeddingResult);
+    const queryResponse = response.data;
 
-    if (!cvEmbeddingResult.records[cvId]) {
-      throw new Error("CV embedding not found in Pinecone.");
+    if (!queryResponse.matches) {
+      console.log("No matches found from FastAPI.");
+      return [];
     }
 
-    const cvEmbedding = cvEmbeddingResult.records[cvId].values;
+    const jobIds = queryResponse.matches.map((match) => match.id);
+    console.log("Matched job IDs:", jobIds);
 
-    // console.log(cvEmbedding);
-
-    // Thực hiện truy vấn similarity trong Pinecone
-    const queryResponse = await pineconeIndex.query({
-      vector: cvEmbedding,
-      topK: topK,
-      includeValues: false,
-      includeMetadata: true,
-    });
-
-    // Lấy danh sách job IDs
-    const jobIds = queryResponse.matches?.map((match) => match.id) || [];
-
-    // Lấy thông tin chi tiết công việc từ MongoDB
+    // Fetch job details from MongoDB
+    console.log("Fetching job details from MongoDB...");
     const jobs = await JobModel.find({ _id: { $in: jobIds } });
 
-    // Kết hợp thông tin công việc với điểm số
+    // Combine job details with scores
     const recommendations = jobs.map((job) => {
-      const match = queryResponse.matches?.find(
+      const match = queryResponse.matches.find(
         (m) => m.id === job._id.toString()
       );
       return {
@@ -59,9 +47,10 @@ export async function recommendJobs(
       };
     });
 
+    console.log("Job recommendations prepared successfully.");
     return recommendations;
   } catch (error) {
-    console.error("Error in recommendJobs:", error);
+    console.error("Error in recommendJobs:", error.message || error);
     throw error;
   }
 }

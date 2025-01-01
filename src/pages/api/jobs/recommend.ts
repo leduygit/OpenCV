@@ -3,15 +3,8 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { authenticate } from "../../../middleware/authMiddleware";
 import { recommendJobs } from "../../../lib/services/jobRecommender";
 import { CVModel } from "../../../lib/models/CV";
+import connectToDatabase from "@/lib/db/mongodb";
 
-/**
- * Handles GET requests to the /jobs/recommend endpoint, which returns a list of job recommendations
- * for the user based on the user's CV.
- *
- * @param {NextApiRequest} req - The API request object.
- * @param {NextApiResponse} res - The API response object.
- * @returns {Promise<void>}
- */
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -20,6 +13,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     // Get the user ID from the request
     const userId = req.user.id;
+    console.log("Connecting to database...");
+    await connectToDatabase();
+
+    console.log("Fetching job recommendations for user:", userId);
 
     // Find the most recent CV for the user
     const userCV = await CVModel.findOne({ userId }).sort({ uploadedAt: -1 });
@@ -33,7 +30,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const recommendations = await recommendJobs(userCV._id.toString(), 10);
 
     // Return the list of job recommendations in the response
-    return res.status(200).json({ recommendations });
+    return res
+      .status(200)
+      .json({ total: recommendations.length, recommendations });
   } catch (error) {
     // Log any error that occurs and return a 500 Internal Server Error response
     console.error("Error in /jobs/recommend:", error);

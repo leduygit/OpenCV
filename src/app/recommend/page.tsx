@@ -1,28 +1,105 @@
 "use client";
 import { useState, useEffect } from "react";
+import { Job } from "../component/joblisting";
+import { useRouter } from "next/navigation";
+
+interface Recommendation {
+  job: Job;
+  score: number;
+}
 
 export default function FileUploadPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
   const [uploadComplete, setUploadComplete] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const router = useRouter();
+
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     if (event.target.files && event.target.files.length > 0) {
-      setSelectedFile(event.target.files[0]);
-      // Start loading immediately when a file is selected
+      const file = event.target.files[0];
+      setSelectedFile(file);
       setLoading(true);
       setProgress(0);
       setUploadComplete(false); // Reset the completion status
+
+      try {
+        const token = localStorage.getItem("token"); // Retrieve the token from localStorage
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch("/api/cv/upload", {
+          method: "POST",
+          body: formData,
+          headers: {
+            Authorization: `Bearer ${token}`, // Add the bearer token
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("File upload failed");
+        }
+
+        const result = await response.json();
+        console.log("Upload successful:", result);
+        setUploadComplete(true); // Mark the upload as complete
+        setErrorMessage(""); // Clear any previous error message
+      } catch (error) {
+        console.error("Upload error:", error);
+        setErrorMessage(
+          "An error occurred during file upload. Please try again."
+        );
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (selectedFile) {
-      alert(`File "${selectedFile?.name}" uploaded successfully!`);
-      setUploadComplete(true); // Mark the upload as complete
+      try {
+        const token = localStorage.getItem("token"); // Retrieve the token from localStorage
+
+        console.log(token);
+
+        const response = await fetch("/api/jobs/recommend", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`, // Add the bearer token
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("File upload failed");
+        }
+
+        const result = await response.json();
+        const jobsArray: Job[] = result.recommendations.map(
+          (recommendation: Recommendation) => recommendation.job
+        );
+
+        // alert(result.recommendations); // Display the recommendations
+        setUploadComplete(true); // Mark the upload as complete
+        setErrorMessage(""); // Clear any previous error message
+
+        // redirect to "job" page passing the jobsArray
+
+        const jobsQuery = JSON.stringify(jobsArray);
+        // save the jobsQuery in local storage
+        localStorage.setItem("jobs", jobsQuery);
+        router.push(`/job`);
+      } catch (error) {
+        console.error("Upload error:", error);
+        setErrorMessage(
+          "An error occurred during file upload. Please try again."
+        );
+      }
     } else {
-      alert("Please select a file before uploading.");
+      setErrorMessage("Please select a file");
     }
   };
 
@@ -52,12 +129,12 @@ export default function FileUploadPage() {
   // Determine file type logo
   const getFileTypeLogo = (file: File) => {
     if (file.name.endsWith(".pdf")) {
-      return "https://www.bing.com/images/blob?bcid=r.v34qS.88kHbg"; // PDF logo
+      return "https://i.ibb.co/3YXMjYx/pngtree-pdf-file-icon-png-png-image-7965915.png"; // PDF logo
     }
     if (file.name.endsWith(".docx")) {
-      return "https://th.bing.com/th/id/R.8e70cda231e4e7e91e974e7378d965c9?rik=cIQimYS0vLIpaQ&pid=ImgRaw&r=0"; // DOCX logo
+      return "https://i.ibb.co/y6KLxhZ/docx.png"; // DOCX logo
     }
-    return "https://th.bing.com/th/id/R.2cf435025c4a8328cd9aab77f4594ddd?rik=3lSdm0WPdqFu9g&pid=ImgRaw&r=0"; // Default logo
+    return "https://i.ibb.co/fpZdkCh/default.png"; // Default logo
   };
 
   // Truncate long file names
@@ -70,7 +147,7 @@ export default function FileUploadPage() {
       <div className="w-full bg-[#AC75754D] flex items-center">
         {/* Image on the left */}
         <img
-          src="https://s3-alpha-sig.figma.com/img/a0ab/e5fe/345d5d52c45b67eaf372a11eb40f719e?Expires=1733702400&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=AgYvQpbwg~6R6RTJNssXXCIM-mB4j~NvfN9GmDOfKGe64sdpHaXrhC06OgSjjdK4spTULU6W4~5RFqKGW0oCgtB6Emcr163nwXpuLQQafk6xkiL-w2Yz4JHC41MXHYyLUis0k~624OrNfilDfEVFz9CDrAItjpFxdorU9aFF8pmrxskAsBzF6vr3UsBLj22rJFjNSYE1Nw2MJVj96PrySoauXsgtkBPL0hSkSyGZoF2qy4-RWPP4rOH43Q5Y3D86ugNPD549C7U3O~GUf2BRe8u48ZMMng3RViYNHv~~wrosWtsV9mcvRcoFZYk0lnxQdnrrI2OQZM5A8P8w2XZkNQ__"
+          src="https://i.ibb.co/D4Bpjk3/rec.png"
           alt="Workplace Illustration"
           className="ml-48 h-40 w-40"
         />
@@ -99,9 +176,9 @@ export default function FileUploadPage() {
           {/* Center Image Icon */}
           <div className="mb-6">
             <img
-              src="https://s3-alpha-sig.figma.com/img/0bcf/8148/c932c7cc8222649a49891efd7248eade?Expires=1733702400&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=fY1CH6X8SZIztU32uR6rUD1sEWIJkcSpy8m79ZZPeqBGHyo28xDXx304i7uR8mTTpBF7KUuY87VaJ3F1UtB9Ubu-OE5F5QfdQNRBxMhYXaXpoM8QN4J97hiVyeGd04uH8YSAPrN95yZ~GWZBHxvc~We-wpzZfZBTadfGXKfyLi2hXiDQirmIOBsf6qHk~Rmtzqb7HBW9qzu-qENx2XcdQJAOJbyiIbRMLjellzxveghinzCzsgjrAeaAd8tr2m43zlI97Jr4Wbk8KIc~mBotgFwc7Y9uMsi37B1K78EFSo9UzCjNjnUWUJb5WOc8XB0R2R6B0ozCa0NgQIjuQRmPew__"
+              src="https://i.ibb.co/NTM7Lh0/upload.png"
               alt="Upload Icon"
-              className="h-20 w-20"
+              className="h-20 w-20 animate-float"
             />
           </div>
 
@@ -121,6 +198,24 @@ export default function FileUploadPage() {
             className="absolute inset-0 opacity-0 cursor-pointer"
           />
         </div>
+
+        <style jsx>{`
+          @keyframes float {
+            0% {
+              transform: translateY(0);
+            }
+            50% {
+              transform: translateY(-20px);
+            }
+            100% {
+              transform: translateY(0);
+            }
+          }
+
+          .animate-float {
+            animation: float 2.5s ease-in-out infinite;
+          }
+        `}</style>
 
         {selectedFile && (
           <div className="mt-6 bg-gray-50 p-4 rounded-md border-2 border-[#00000066]">
@@ -181,6 +276,14 @@ export default function FileUploadPage() {
       >
         Find
       </button>
+
+      {/* Error Message */}
+
+      {errorMessage && (
+        <div className="mt-4 text-red-500 text-sm font-semibold">
+          {errorMessage}
+        </div>
+      )}
     </div>
   );
 }

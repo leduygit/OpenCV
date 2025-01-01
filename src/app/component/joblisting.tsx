@@ -1,61 +1,94 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Job {
-  id: number;
+  _id: number;
   title: string;
-  company: string;
-  logoUrl: string;
+  companyName: string;
+  imageURL: string | undefined;
   location: string;
-  salary: string;
-  details: string;
+  salaryRange: string;
+  jobDescription: string;
   address: string;
-  size: string;
-  type: string;
-  sector: string;
-  founded: string;
-  revenue: string;
+  industry: string;
+  position: string;
+  requiredExperience: string;
+  requiredDegree: string;
+  skillsRequired: string[];
+  requirementContext: string;
 }
 
-const jobs: Job[] = [
-  {
-    id: 1,
-    title: "IT Specialist (IT Technician)",
-    logoUrl:
-      "https://daihoclienthong.edu.vn/wp-content/uploads/2021/04/LienThongDHKhoaHocTuNhien.jpeg",
-    company: "Drodex",
-    location: "Rancho Cordova, CA",
-    salary: "$45K - $65K",
-    address: "2890 Kilgore Road, Rancho Cordova, CA 95670",
-    details:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
-    size: "100-500 employees",
-    type: "Nonprofit",
-    sector: "Healthcare",
-    founded: "2003",
-    revenue: "$50M - $100M",
-  },
-  {
-    id: 2,
-    title: "IT Associate",
-    logoUrl: "https://via.placeholder.com/150",
-    company: "Nexus HR Services",
-    location: "Sacramento, CA",
-    salary: "$25.00 Per Hour",
-    address: "2890 Kilgore Road, Rancho Cordova, CA 95670",
-    details: "Provide IT support to ensure efficient operations...",
-    size: "10-50 employees",
-    type: "Private",
-    sector: "Consulting",
-    founded: "2010",
-    revenue: "$10M - $20M",
-  },
-  // Add more job data as needed
-];
+function JobListing({ jobs }: { jobs: Job[] }) {
+  const handleSaveJob = async (jobId: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        "http://localhost:3000/api/user/interaction",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // Add the bearer token
+          },
+          body: JSON.stringify({
+            jobId,
+            interactionType: "saved",
+            notes: "Job saved",
+          }),
+        }
+      );
 
-export default function JobListing() {
-  const [selectedJob, setSelectedJob] = useState<Job | null>(
-    jobs.length > 0 ? jobs[0] : null
-  );
+      if (response.ok) {
+        console.log("Job saved successfully:", jobId);
+      } else {
+        console.error("Failed to save job");
+      }
+    } catch (error) {
+      console.error("Error saving job:", error);
+    }
+  };
+
+  const [selectedJob, setSelectedJob] = useState<Job | null>(jobs[0] || null);
+  // API call when selectedJob changes
+  useEffect(() => {
+    if (!selectedJob) return;
+
+    async function logInteraction() {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(
+          "http://localhost:3000/api/user/interaction",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`, // Add the bearer token
+            },
+            body: JSON.stringify({
+              jobId: selectedJob?._id,
+              interactionType: "viewed",
+              notes: "Viewed Job",
+            }),
+          }
+        );
+
+        if (response.ok) {
+          console.log(
+            "Interaction logged successfully for job:",
+            selectedJob?._id
+          );
+        } else {
+          console.error("Failed to log interaction");
+        }
+      } catch (error) {
+        console.error("Error logging interaction:", error);
+      }
+    }
+
+    logInteraction();
+  }, [selectedJob]);
+
+  console.log(selectedJob);
+
   const [showFullDetails, setShowFullDetails] = useState(false);
 
   const toggleDetails = () => setShowFullDetails(!showFullDetails);
@@ -68,13 +101,13 @@ export default function JobListing() {
           <div>
             {jobs.map((job) => (
               <div
-                key={job.id}
+                key={job._id}
                 onClick={() => {
                   setSelectedJob(job);
                   setShowFullDetails(false); // Reset when selecting a new job
                 }}
                 className={`flex w-full items-start border rounded-lg p-4 shadow-sm space-x-4 cursor-pointer hover:bg-gray-100 ${
-                  selectedJob?.id === job.id
+                  selectedJob?._id === job._id
                     ? "border-black"
                     : "border-transparent"
                 } animation-hoverGrow`} // Applying hoverGrow animation
@@ -82,22 +115,28 @@ export default function JobListing() {
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center space-x-2">
                     <img
-                      src={job.logoUrl}
+                      src={job.imageURL}
                       alt="Company logo"
                       className="w-10 h-10 object-cover rounded-full"
                     />
-                    <p className="text-sm text-gray-500">{job.company}</p>
+                    <p className="text-sm text-gray-500">{job.companyName}</p>
                   </div>
                   <h3 className="font-bold text-[20px] text-[#1E1E1E]">
-                    {job.title}
+                    {job.title.length > 20
+                      ? job.title.slice(0, 20) + "..."
+                      : job.title}
                   </h3>
-                  <p className="text-sm text-[13px]">{job.address}</p>
-                  <p className="text-sm text-[13px]">{job.salary}</p>
+                  <p className="text-sm text-[13px]">{job.location}</p>
+                  <p className="text-sm text-[13px]">{job.salaryRange}</p>
                 </div>
                 <div>
                   <button
                     aria-label="Save job"
                     className="text-gray-400 hover:text-gray-600"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSaveJob(job._id.toString());
+                    }}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -132,13 +171,13 @@ export default function JobListing() {
                 <div className="flex justify-between items-center">
                   <div className="flex items-center space-x-4">
                     <img
-                      src={selectedJob.logoUrl}
+                      src={selectedJob.imageURL}
                       alt="Company logo"
                       className="w-16 h-16 object-cover rounded-full"
                     />
                     <div>
                       <p className="text-sm text-black-500 font-semibold">
-                        {selectedJob.company}
+                        {selectedJob.companyName}
                       </p>
                     </div>
                   </div>
@@ -148,6 +187,7 @@ export default function JobListing() {
                     <button
                       aria-label="Bookmark job"
                       className="text-gray-400 hover:text-gray-600 bg-gray-200 p-2 rounded-md"
+                      onClick={() => handleSaveJob(selectedJob._id.toString())}
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -192,15 +232,15 @@ export default function JobListing() {
                   {selectedJob.title}
                 </h3>
                 <p className="text-[15px] text-black-500">
-                  {selectedJob.address}
+                  {selectedJob.location}
                 </p>
                 <p className="text-[16px] text-black-500 pt-10 overflow-hidden transition-all duration-500 ease-in-out">
                   {showFullDetails
-                    ? selectedJob.details
-                    : selectedJob.details.slice(0, 100) +
-                      (selectedJob.details.length > 100 ? "..." : "")}
+                    ? selectedJob.jobDescription
+                    : selectedJob.jobDescription.slice(0, 100) +
+                      (selectedJob.jobDescription.length > 100 ? "..." : "")}
                 </p>
-                {selectedJob.details.length > 100 && (
+                {selectedJob.jobDescription.length > 100 && (
                   <div className="flex justify-between items-center">
                     <button
                       onClick={toggleDetails}
@@ -230,23 +270,75 @@ export default function JobListing() {
               {/* Section: Base Pay */}
               <div className="space-y-3 border-b border-gray-300 pt-3 pl-16 pb-10 pr-10">
                 <h4 className="font-bold text-[25px] text-[#1E1E1E]">
-                  Base Pay
+                  Salary Range
                 </h4>
-                <p className="text-sm text-black-500 pb-5">
-                  {" "}
-                  {selectedJob.address}
-                </p>
                 <div className="bg-gray-100 p-4 rounded-lg text-[30px] text-[#0B1344] flex items-center">
-                  <span>{selectedJob.salary}</span>
+                  <span>{selectedJob.salaryRange}</span>
                   <span className="text-[16px] text-[#0B1344] pl-2 pt-2">
-                    /hr
+                    /tháng
                   </span>
                 </div>
               </div>
-              {/* Section: Company Overview */}
+              {/* Requirements */}
               <div className="space-y-2 border-b border-gray-300 pl-16 pt-4 pb-10">
                 <h4 className="font-bold text-[25px] text-[#1E1E1E]">
-                  Company Overview
+                  Requirements
+                </h4>
+                <div className="flex-col items-start space-y-2 pt-4">
+                  <div className="flex justify-between max-w-[650px] pr-4 text-[16px]">
+                    <p className="text-black-500">
+                      {selectedJob.requirementContext}
+                    </p>
+                  </div>
+
+                  <br />
+
+                  <h5 className="font-bold text-[23px] text-[#1E1E1E]">
+                    Skills
+                  </h5>
+                  <ul className="list-disc pl-8">
+                    {selectedJob.skillsRequired.map((skill, index) => (
+                      <li key={index} className="text-black-500 text-[16px]">
+                        {skill}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+              {/* Section: Job Overview */}
+              <div className="space-y-2 border-b border-gray-300 pl-16 pt-4 pb-10">
+                <h4 className="font-bold text-[25px] text-[#1E1E1E]">
+                  Job Overview
+                </h4>
+                <div className="flex-col items-start space-y-2 pt-4">
+                  <div className="flex justify-between max-w-[650px] pr-4 text-[16px]">
+                    <p className="text-black font-semibold">Industry</p>
+                    <p className="text-black-500">{selectedJob.industry}</p>
+                  </div>
+                  <div className="flex justify-between max-w-[650px] pr-4 text-[16px]">
+                    <p className="text-black font-semibold">Position</p>
+                    <p className="text-black-500">{selectedJob.position}</p>
+                  </div>
+                  <div className="flex justify-between max-w-[650px] pr-4 text-[16px]">
+                    <p className="text-black font-semibold">
+                      Required Experience
+                    </p>
+                    <p className="text-black-500">
+                      {selectedJob.requiredExperience}
+                    </p>
+                  </div>
+                  <div className="flex justify-between max-w-[650px] pr-4 text-[16px]">
+                    <p className="text-black font-semibold">Required Degree</p>
+                    <p className="text-black-500">
+                      {selectedJob.requiredDegree}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              {/* Section: Job Overview */}
+              {/* <div className="space-y-2 border-b border-gray-300 pl-16 pt-4 pb-10">
+                <h4 className="font-bold text-[25px] text-[#1E1E1E]">
+                  Job Overview
                 </h4>
                 <div className="flex-col items-start space-y-2 pt-4">
                   <div className="flex justify-between max-w-[250px] pr-4 text-[16px]">
@@ -269,8 +361,30 @@ export default function JobListing() {
                     <p className="text-black font-semibold">Revenue</p>
                     <p className="text-black-500">{selectedJob.revenue}</p>
                   </div>
+                  <div className="flex justify-between max-w-[650px] pr-4 text-[16px]">
+                    <p className="text-black font-semibold">Industry</p>
+                    <p className="text-black-500">{selectedJob.industry}</p>
+                  </div>
+                  <div className="flex justify-between max-w-[650px] pr-4 text-[16px]">
+                    <p className="text-black font-semibold">Position</p>
+                    <p className="text-black-500">{selectedJob.position}</p>
+                  </div>
+                  <div className="flex justify-between max-w-[650px] pr-4 text-[16px]">
+                    <p className="text-black font-semibold">
+                      Required Experience
+                    </p>
+                    <p className="text-black-500">
+                      {selectedJob.requiredExperience}
+                    </p>
+                  </div>
+                  <div className="flex justify-between max-w-[650px] pr-4 text-[16px]">
+                    <p className="text-black font-semibold">Required Degree</p>
+                    <p className="text-black-500">
+                      {selectedJob.requiredDegree}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              </div> */}
             </div>
           ) : (
             <p>Select a job to see details</p>
@@ -280,3 +394,6 @@ export default function JobListing() {
     </div>
   );
 }
+
+export { JobListing };
+export type { Job };

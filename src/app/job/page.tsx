@@ -1,38 +1,172 @@
 "use client";
 import Head from "next/head";
-import JobListing from "../component/joblisting";
-import { useState } from "react";
+import { JobListing } from "../component/joblisting";
+import { useState, useEffect } from "react";
 import FilterButton from "../component/FilterButton";
 import JobDropdown from "../component/JobDropdown";
+import { Job } from "../component/joblisting";
+import { useSearchParams } from "next/navigation";
+
+interface InteractionResponse {
+  interactions: {
+    jobId: Job; // The jobId is an object of type Job
+  }[];
+}
 
 export default function JobListingPage() {
+  const params = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // Add loading state
-  const [error, setError] = useState(""); // Add error handling
-  const [activeTab, setActiveTab] = useState("forYou"); // Add activeTab state
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState("forYou");
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [savedJobs, setSavedJobs] = useState<Job[]>([]);
+  const [viewedJobs, setViewedJobs] = useState<Job[]>([]);
+
+  // Check if the 'jobs' query parameter exists
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch("http://localhost:3000/api/jobs");
+        if (!response.ok) {
+          throw new Error("Failed to fetch jobs");
+        }
+        const data = await response.json();
+        setJobs(Array.isArray(data.jobs) ? data.jobs : []);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "An unexpected error occurred."
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const fetchSavedJobs = async () => {
+      setIsLoading(true);
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(
+          "/api/user/interaction?interactionType=saved",
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`, // Add the bearer token
+            },
+          }
+        );
+
+        const data: InteractionResponse = await response.json();
+        const jobArray: Job[] = data.interactions.map((data) => data.jobId);
+        setSavedJobs(jobArray);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "An unexpected error occurred."
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const fetchViewedJobs = async () => {
+      setIsLoading(true);
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(
+          "/api/user/interaction?interactionType=viewed",
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`, // Add the bearer token
+            },
+          }
+        );
+        const data: InteractionResponse = await response.json();
+        const jobArray: Job[] = data.interactions.map((data) => data.jobId);
+        setViewedJobs(jobArray);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "An unexpected error occurred."
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const jobsParam = localStorage.getItem("jobs");
+
+    if (jobsParam) {
+      try {
+        // Parse and set the jobs from localStorage
+        const jobsArray: Job[] = JSON.parse(jobsParam);
+        setJobs(jobsArray); // Set the jobs passed in localStorage
+      } catch (err) {
+        console.error("Error parsing jobs parameter", err);
+      }
+    } else if (activeTab === "forYou" && jobs.length === 0) {
+      // Fetch jobs only if not passed via localStorage and if jobs are not already loaded
+      fetchJobs();
+    }
+
+    if (activeTab === "yourActivity") {
+      fetchSavedJobs();
+      fetchViewedJobs();
+    }
+
+    // This function will be triggered when the page is refreshed or the user navigates away
+    const handleBeforeUnload = () => {
+      // Optionally remove jobs only if you want them cleared when the page is leaving
+      localStorage.removeItem("jobs");
+    };
+
+    // Adding the event listener for beforeunload
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    // Cleanup the event listener when the component unmounts
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [activeTab, jobs.length, params]);
 
   const handleFilterChoice = (selectedOptions: string[]) => {
     console.log(`Selected filters:`, selectedOptions);
   };
 
-  const handleSearch = () => {
-    if (!searchQuery || !location) {
+  const handleSearch = async () => {
+    setIsLoading(true);
+    if (!searchQuery && !location) {
       setError("Please enter both a job query and a location.");
       return;
     }
-    setError(""); // Clear any previous errors
-    setIsLoading(true);
 
-    // Simulate a search function (replace this with real logic)
-    setTimeout(() => {
-      setIsLoading(false);
-      console.log("Searching for:", searchQuery, "in", location);
-      // Insert actual search functionality here
-    }, 1500);
+    const url = new URL("http://localhost:3000/api/jobs");
+    url.searchParams.append("keyword", searchQuery);
+    url.searchParams.append("location", location); // Include location in query params
+
+    try {
+      const response = await fetch(url.toString(), {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Jobs:", data);
+      setJobs(Array.isArray(data?.jobs) ? data.jobs : []);
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+      setError("Failed to fetch jobs. Please try again later.");
+    }
+
+    setIsLoading(false);
   };
 
-  const handleKeyDown = (e: any) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleSearch();
     }
@@ -40,86 +174,52 @@ export default function JobListingPage() {
 
   return (
     <div>
+      <Head>
+        <title>Job Listings</title>
+      </Head>
       <main className="min-h-screen flex items-center flex-col">
-        <div className="flex w-1/2 max-w-[800px] space-x-2 pb-10">
-          {/* Search Input with Search Icon */}
+        {/* Search Section */}
+        <div className="flex w-full max-w-[800px] space-x-2 pb-10">
           <div className="relative flex-grow w-2/3">
             <input
               type="text"
               placeholder="Search for jobs"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleKeyDown} // Add the keydown event listener
-              className="flex-grow w-full p-3 pl-12 rounded-l-full border bg-gray-300 border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
-            />
-            <img
-              src="https://s3-alpha-sig.figma.com/img/6e36/9177/5fcbba1fc3767df2819548b063c70034?Expires=1732492800&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=ZgxwunoS2f00zUjScsndBW3Sn2iDNSgYwTMRfwgeYwz30d5cuC4vtg-uSCbUZ8ycdnq7c9r0ahseIOyoz~Np2K3syGrPW5TacP415foGtP0EoJFHyIJWh~0L~BnELloxvXJXaW3TR-XW9oYpek-puakQxo~MVIwOWYNvUUqkkb8DAiTFr8oQC9nQmChyYpLT5TYgE39srbpcG~hoZV1XXUkfdxYrFC1BWnMsyLLsAtrFO2xKKeaIbGY3bTx9AWRIS0yl41c-ZzCkcE6HZlVBCCTsgNQVaYmLSa-u7BJooltosS7Wn6GR6W~Cb-fYUDtbo7SvliWphQHfgXIGFF1Xpw__"
-              alt="Search Icon"
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500"
-            />
-          </div>
-
-          {/* Location Input with GPS Icon */}
-          <div className="relative flex-grow">
-            <input
-              type="text"
-              placeholder="Location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              onKeyDown={handleKeyDown} // Add the keydown event listener
-              className="flex-grow p-3 pl-12 pr-12 rounded-r-full border bg-gray-300 border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
-            />
-            <img
-              src="https://s3-alpha-sig.figma.com/img/a494/e1f3/1cbedf8ebb26586958590e29810ab238?Expires=1732492800&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=XjLYzlZfGX4T~B9ms8EtVVuDHt3agTK5~6xSBn1-V41ljf9Sz6qDXgJUECzWfOoBg9xyukWOcrURmrlZKVXEvsUEgniOiRu8PWpBTMPZkwAerOaZTTG1WIv-BY9DZYILCmhbJhdW1P9fggU1M-l5a0A5-BVsdqFvETjkJkgyB4stzgwl0kQKexEZDqpQmkHGgyFGyDzbgDOuhyfWdLFb3cgos~sksOsJrJk11ylILgnZgXk91sd57Kfg9nVxJxPDOtFbZJsusmw6ehIvBHMUnhuBtMXjuRJDDkiE-VRyOC56zgkEqQBaKzt2ny4foakGFiu3~tXuyTmntHSfQybi5w__"
-              alt="GPS Icon"
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 h-7 w-7 text-gray-500"
+              onKeyDown={handleKeyDown}
+              className="flex-grow w-full p-3 pl-12 rounded-l-full rounded-r-full border bg-gray-300 text-[18px] border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
             />
           </div>
         </div>
 
+        {/* Tab Section */}
         <div className="w-full border-b-2 border-gray-300">
-          {/* Centered Tab Buttons */}
           <div className="flex justify-center mx-auto mt-8">
             <div className="flex space-x-4">
-              <button
-                onClick={() => setActiveTab("forYou")}
-                className={`px-4 py-2 text-center text-[17px] relative ${
-                  activeTab === "forYou"
-                    ? "font-bold text-[17px]"
-                    : "text-black-500 text-[17px]"
-                }`}
-              >
-                For You
-                {/* Underline Animation */}
-                <span
-                  className={`absolute left-0 bottom-0 h-[4px] w-full bg-[#AC7575] transform transition-all duration-300 ease-in-out ${
-                    activeTab === "forYou" ? "scale-x-100" : "scale-x-0"
+              {["forYou", "yourActivity"].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-2 text-center text-[17px] relative ${
+                    activeTab === tab
+                      ? "font-bold text-[17px]"
+                      : "text-black-500 text-[17px]"
                   }`}
-                />
-              </button>
-              <button
-                onClick={() => setActiveTab("yourActivity")}
-                className={`px-4 py-2 text-center text-[17px] relative ${
-                  activeTab === "yourActivity"
-                    ? "font-bold text-[17px]"
-                    : "text-black-500 text-[17px]"
-                }`}
-              >
-                Your Activity
-                {/* Underline Animation */}
-                <span
-                  className={`absolute left-0 bottom-0 h-[4px] w-full bg-[#AC7575] transform transition-all duration-300 ease-in-out ${
-                    activeTab === "yourActivity" ? "scale-x-100" : "scale-x-0"
-                  }`}
-                />
-              </button>
+                >
+                  {tab === "forYou" ? "For You" : "Your Activity"}
+                  <span
+                    className={`absolute left-0 bottom-0 h-[4px] w-full bg-[#AC7575] transform transition-all duration-300 ease-in-out ${
+                      activeTab === tab ? "scale-x-100" : "scale-x-0"
+                    }`}
+                  />
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
+        {/* Filter Section */}
         <div className="flex w-full ml-48 mt-5">
-          {" "}
-          {/* Added flex and justify-start */}{" "}
           <FilterButton
             label="Company Rating"
             options={["Option 1", "Option 2", "Option 3", "Option 4"]}
@@ -127,20 +227,34 @@ export default function JobListingPage() {
           />
         </div>
 
-        {/* Conditional Rendering Based on Active Tab */}
-        {activeTab === "forYou" ? (
+        {/* Job Listings Section */}
+        {isLoading ? (
+          <p>Loading jobs...</p>
+        ) : error ? (
+          <p className="text-red-500">{error}</p>
+        ) : activeTab === "forYou" ? (
           <div className="w-full max-w-[2500px] pl-20 ml-8 pt-14">
-            <JobListing />
+            {jobs.length > 0 ? (
+              <JobListing jobs={jobs} />
+            ) : (
+              <p>No jobs available.</p>
+            )}
           </div>
         ) : (
           <div className="w-full max-w-[2500px] pt-14">
-            <div>
-              <JobDropdown title="Recently Visited">
-                <JobListing />
-              </JobDropdown>
-            </div>
+            <JobDropdown title="Recently Visited">
+              {viewedJobs.length > 0 ? (
+                <JobListing jobs={viewedJobs} />
+              ) : (
+                <p>No recently visited jobs.</p>
+              )}
+            </JobDropdown>
             <JobDropdown title="Saved">
-              <JobListing />
+              {savedJobs.length > 0 ? (
+                <JobListing jobs={savedJobs} />
+              ) : (
+                <p>No saved jobs.</p>
+              )}
             </JobDropdown>
           </div>
         )}
