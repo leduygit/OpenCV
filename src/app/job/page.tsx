@@ -135,13 +135,35 @@ export default function JobListingPage() {
     console.log(`Selected filters:`, selectedOptions);
   };
 
-  const handleSearch = () => {
-    if (!searchQuery || !location) {
+  const handleSearch = async () => {
+    setIsLoading(true);
+    if (!searchQuery && !location) {
       setError("Please enter both a job query and a location.");
       return;
     }
-    setError("");
-    console.log("Searching for:", searchQuery, "in", location);
+
+    const url = new URL("http://localhost:3000/api/jobs");
+    url.searchParams.append("keyword", searchQuery);
+    url.searchParams.append("location", location); // Include location in query params
+
+    try {
+      const response = await fetch(url.toString(), {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Jobs:", data);
+      setJobs(Array.isArray(data?.jobs) ? data.jobs : []);
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+      setError("Failed to fetch jobs. Please try again later.");
+    }
+
+    setIsLoading(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -157,7 +179,7 @@ export default function JobListingPage() {
       </Head>
       <main className="min-h-screen flex items-center flex-col">
         {/* Search Section */}
-        <div className="flex w-1/2 max-w-[800px] space-x-2 pb-10">
+        <div className="flex w-full max-w-[800px] space-x-2 pb-10">
           <div className="relative flex-grow w-2/3">
             <input
               type="text"
@@ -165,17 +187,7 @@ export default function JobListingPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="flex-grow w-full p-3 pl-12 rounded-l-full border bg-gray-300 border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
-            />
-          </div>
-          <div className="relative flex-grow">
-            <input
-              type="text"
-              placeholder="Location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="flex-grow p-3 pl-12 pr-12 rounded-r-full border bg-gray-300 border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              className="flex-grow w-full p-3 pl-12 rounded-l-full rounded-r-full border bg-gray-300 text-[18px] border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
             />
           </div>
         </div>

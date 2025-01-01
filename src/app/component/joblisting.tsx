@@ -9,16 +9,12 @@ interface Job {
   salaryRange: string;
   jobDescription: string;
   address: string;
-  size: string;
-  type: string;
-  sector: string;
-  founded: string;
-  revenue: string;
   industry: string;
   position: string;
   requiredExperience: string;
   requiredDegree: string;
   skillsRequired: string[];
+  requirementContext: string;
 }
 
 function JobListing({ jobs }: { jobs: Job[] }) {
@@ -274,17 +270,39 @@ function JobListing({ jobs }: { jobs: Job[] }) {
               {/* Section: Base Pay */}
               <div className="space-y-3 border-b border-gray-300 pt-3 pl-16 pb-10 pr-10">
                 <h4 className="font-bold text-[25px] text-[#1E1E1E]">
-                  Base Pay
+                  Salary Range
                 </h4>
-                <p className="text-sm text-black-500 pb-5">
-                  {" "}
-                  {selectedJob.location}
-                </p>
                 <div className="bg-gray-100 p-4 rounded-lg text-[30px] text-[#0B1344] flex items-center">
                   <span>{selectedJob.salaryRange}</span>
                   <span className="text-[16px] text-[#0B1344] pl-2 pt-2">
-                    /hr
+                    /tháng
                   </span>
+                </div>
+              </div>
+              {/* Requirements */}
+              <div className="space-y-2 border-b border-gray-300 pl-16 pt-4 pb-10">
+                <h4 className="font-bold text-[25px] text-[#1E1E1E]">
+                  Requirements
+                </h4>
+                <div className="flex-col items-start space-y-2 pt-4">
+                  <div className="flex justify-between max-w-[650px] pr-4 text-[16px]">
+                    <p className="text-black-500">
+                      {selectedJob.requirementContext}
+                    </p>
+                  </div>
+
+                  <br />
+
+                  <h5 className="font-bold text-[23px] text-[#1E1E1E]">
+                    Skills
+                  </h5>
+                  <ul className="list-disc pl-8">
+                    {selectedJob.skillsRequired.map((skill, index) => (
+                      <li key={index} className="text-black-500 text-[16px]">
+                        {skill}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
               {/* Section: Job Overview */}
@@ -318,7 +336,7 @@ function JobListing({ jobs }: { jobs: Job[] }) {
                 </div>
               </div>
               {/* Section: Job Overview */}
-              <div className="space-y-2 border-b border-gray-300 pl-16 pt-4 pb-10">
+              {/* <div className="space-y-2 border-b border-gray-300 pl-16 pt-4 pb-10">
                 <h4 className="font-bold text-[25px] text-[#1E1E1E]">
                   Job Overview
                 </h4>
@@ -366,7 +384,7 @@ function JobListing({ jobs }: { jobs: Job[] }) {
                     </p>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
           ) : (
             <p>Select a job to see details</p>

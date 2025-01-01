@@ -82,7 +82,7 @@ export default function FileUploadPage() {
           (recommendation: Recommendation) => recommendation.job
         );
 
-        alert(result.recommendations); // Display the recommendations
+        // alert(result.recommendations); // Display the recommendations
         setUploadComplete(true); // Mark the upload as complete
         setErrorMessage(""); // Clear any previous error message
 
@@ -178,7 +178,7 @@ export default function FileUploadPage() {
             <img
               src="https://i.ibb.co/NTM7Lh0/upload.png"
               alt="Upload Icon"
-              className="h-20 w-20"
+              className="h-20 w-20 animate-float"
             />
           </div>
 
@@ -198,6 +198,24 @@ export default function FileUploadPage() {
             className="absolute inset-0 opacity-0 cursor-pointer"
           />
         </div>
+
+        <style jsx>{`
+          @keyframes float {
+            0% {
+              transform: translateY(0);
+            }
+            50% {
+              transform: translateY(-20px);
+            }
+            100% {
+              transform: translateY(0);
+            }
+          }
+
+          .animate-float {
+            animation: float 2.5s ease-in-out infinite;
+          }
+        `}</style>
 
         {selectedFile && (
           <div className="mt-6 bg-gray-50 p-4 rounded-md border-2 border-[#00000066]">

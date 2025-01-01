@@ -1,6 +1,9 @@
-import Image from "next/image";
+"use client";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const router = useRouter();
+
   return (
     <div className="flex flex-col items-center justify-center mt-16">
       {/* Welcome Text */}
@@ -22,6 +25,7 @@ export default function Home() {
         <button
           className="bg-[#AC7575] text-white font-sans font-medium text-[18px] py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105 focus:outline-none"
           style={{ width: "300px" }}
+          onClick={() => router.push("/recommend")}
         >
           Let's get started
         </button>
