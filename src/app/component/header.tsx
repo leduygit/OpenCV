@@ -60,7 +60,13 @@ const Header = () => {
             <button
               key={index}
               className="relative text-[#15143966] text-[16px] font-medium after:content-[''] after:absolute after:left-[-6px] after:right-[-6px] after:bottom-[-3px] after:h-[3px] after:bg-[#AC7575] after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300"
-              onClick={() => router.push(`/${text.toLowerCase()}`)}
+              onClick={() =>
+                router.push(
+                  text === "Home" || text === "About Us"
+                    ? "/"
+                    : `/${text.toLowerCase()}`
+                )
+              }
             >
               {text}
             </button>
